@@ -3,9 +3,8 @@ import tkinter as tk
 from PIL import Image, ImageTk, ImageTk, ImageDraw
 import cv2
 import time
-#-*- coding:utf-8 -*-
-#boton.bind("<Return>", saludar_enter) accionar cuando presionas enter
-# Crear una ventana
+import os
+
 
 root = tk.Tk()
 root.title("Auditoria Tesla")
@@ -44,11 +43,13 @@ canvas.grid()
 
 a=0
 #info_input1=0
-def MAIN(a): 
+def MAIN(a):
+    
     def tiempo():
         a=0
         MAIN(a)
     def procesar_datos(event):
+        global info_input1
         info_input1=input1.get()
         print("informacion input1: ", info_input1)
         
@@ -63,46 +64,59 @@ def MAIN(a):
         input1.delete(0,'end')
         input1.focus_set()
         sequence()
-        
- 
-        
 
-    # print("informacionn input2: ", info_input2)
 
     #funcion para cambiar el enfoque
     def open_cam():
-        cap = cv2.VideoCapture(0) # Abre la camara con el indice 0 (camara predeterminada)
+        cap = cv2.VideoCapture(1) # Abre la camara con el indice 0 (camara predeterminada)
         return cap
     
-    def capture_image(cap):
-        for i in range(10):
-            ret, frame = cap.read()
-            if ret:
-                cv2.imwrite("capture_image/capture_image{i}.png", frame)
-                print("Imagen capturada y guardada")
-                time.sleep(0.5)
+     
+    def capture_image(cap,delay,canvas,root,point):
+   
+        ret, frame = cap.read()
+        if ret:
+            img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            img_pil = Image.fromarray(img)
+            
+            #mostrar la imagen en el canvas
+            
+            photo = ImageTk.PhotoImage(img_pil.resize((632,300)))
+            
+            image_canvas = canvas.create_image(947,470, anchor=tk.CENTER, image=photo, tags=("img"))
+            print(f"Imagen mostrada")
+            root.update()
+            time.sleep(delay)
+            canvas.delete("img")
+            root.update()
+            #guardar la imagen
+            if not os.path.exists(info_input1):
+                os.makedirs(info_input1)
+                
+            img_name=f"{info_input1}/capture_image_{point}.png"
+            cv2.imwrite(img_name, frame)
+            print(f"Imagen capturada y guardada")
+           
+            
         else:
-            print("error al capturar la imagen")
-            cap.release()
-            MAIN(a)
- 
-    #etiqueta.grid(row=2, column=0, padx=100)
+            print("error al capturar la imagen")          
 
+        
     def sequence():
-    
-        print("Haz llegado hasta aqui")
-        cap = open_cam()
-        capture_image(cap)
-        #cap.release()
-        a=1
-        MAIN(a)
-    
+        for i in range(4):
+            print("Haz llegado hasta aqui")
+            cap = open_cam()
+            capture_image(cap, delay=2,canvas=canvas, root=root, point=i+1)
+            cap.release()
+            
+                
+        
 
-       
+           
     # Cargar las imagenes
-    image1 = Image.open("fondocompleto.png")
-    image2 = Image.open("tesla2.png")
-    image3 = Image.open("process.png")
+    image1 = Image.open("img/fondocompleto.png")
+    image2 = Image.open("img/tesla2.png")
+    image3 = Image.open("img/process.png")
     
     # Convertir las imagenes en objetos ImageTk
     photo1 = ImageTk.PhotoImage(image1.resize((2200,1000)))
@@ -115,13 +129,13 @@ def MAIN(a):
     
     canvas.create_image(950,600,anchor=tk.CENTER, image=photo3)
     #canvas.create_image(1650,850,anchor=tk.CENTER, image=photo4)
-    if a==1:
-        img = Image.open("/home/pi/auditorias/audpython/AudPython/capture_image/capture_image.png")
-        photo5 = ImageTk.PhotoImage(img.resize((631,300))) #610.100
-        canvas.create_image(947,470,anchor=tk.CENTER, image=photo5) #947-- un valor mas alto mueve la imagen hacia la derecha y uno bajo a la izq, 470 valor alto hacia abajo, valor bajo hacia arriba
-        canvas.move(photo5,0,-10)
-        print(a)
-        root.after(5000, tiempo)
+    #if a==1:
+     #   img = Image.open("/home/pi/auditorias/audpython/AudPython/capture_image/capture_image.png")
+      #  photo5 = ImageTk.PhotoImage(img.resize((631,300))) #610.100
+       # canvas.create_image(947,470,anchor=tk.CENTER, image=photo5) #947-- un valor mas alto mueve la imagen hacia la derecha y uno bajo a la izq, 470 valor alto hacia abajo, valor bajo hacia arriba
+        #canvas.move(photo5,0,-10)
+        #print(a)
+        #root.after(5000, tiempo)
         
         
 #-------------------Declaracion de los componentes--------------------
