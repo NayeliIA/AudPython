@@ -1,9 +1,12 @@
+#-*- coding: utf-8 -*-
 from tkinter import ttk
 import tkinter as tk
 from PIL import Image, ImageTk, ImageTk, ImageDraw
 import cv2
 import time
 import os
+import servidor
+import threading
 
 
 root = tk.Tk()
@@ -12,6 +15,10 @@ root.title("Auditoria Tesla")
 # Tamano de la ventana
 width = 1920
 height = 1080
+
+
+
+    
 def stopBoton():
     print("paro")
 
@@ -42,7 +49,11 @@ canvas.grid()
 #funcion para mostrar el video de la camara
 
 a=0
+#-*- coding: utf-8 -*-
 #info_input1=0
+thread_servidor = threading.Thread(target=servidor.conexion)
+thread_servidor.start()
+
 def MAIN(a):
     
     def tiempo():
@@ -68,7 +79,7 @@ def MAIN(a):
 
     #funcion para cambiar el enfoque
     def open_cam():
-        cap = cv2.VideoCapture(1) # Abre la camara con el indice 0 (camara predeterminada)
+        cap = cv2.VideoCapture(0) # Abre la camara con el indice 0 (camara predeterminada)
         return cap
     
      
@@ -96,18 +107,20 @@ def MAIN(a):
             img_name=f"{info_input1}/capture_image_{point}.png"
             cv2.imwrite(img_name, frame)
             print(f"Imagen capturada y guardada")
-           
+               
             
         else:
             print("error al capturar la imagen")          
 
         
     def sequence():
-        for i in range(4):
+        print("estoy en secuencia")
+        
+        '''for i in range(4):
             print("Haz llegado hasta aqui")
             cap = open_cam()
             capture_image(cap, delay=2,canvas=canvas, root=root, point=i+1)
-            cap.release()
+            cap.release()'''
             
                 
         
@@ -128,14 +141,7 @@ def MAIN(a):
     canvas.create_image(1000,500,anchor=tk.CENTER, image=photo1)
     
     canvas.create_image(950,600,anchor=tk.CENTER, image=photo3)
-    #canvas.create_image(1650,850,anchor=tk.CENTER, image=photo4)
-    #if a==1:
-     #   img = Image.open("/home/pi/auditorias/audpython/AudPython/capture_image/capture_image.png")
-      #  photo5 = ImageTk.PhotoImage(img.resize((631,300))) #610.100
-       # canvas.create_image(947,470,anchor=tk.CENTER, image=photo5) #947-- un valor mas alto mueve la imagen hacia la derecha y uno bajo a la izq, 470 valor alto hacia abajo, valor bajo hacia arriba
-        #canvas.move(photo5,0,-10)
-        #print(a)
-        #root.after(5000, tiempo)
+  
         
         
 #-------------------Declaracion de los componentes--------------------
