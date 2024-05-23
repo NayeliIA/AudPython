@@ -5,9 +5,8 @@ from PIL import Image, ImageTk, ImageTk, ImageDraw
 import cv2
 import time
 import os
-import servidor
+import socket
 import threading
-
 
 root = tk.Tk()
 root.title("Auditoria Tesla")
@@ -15,6 +14,24 @@ root.title("Auditoria Tesla")
 # Tamano de la ventana
 width = 1920
 height = 1080
+host = "localhost"
+port = 40000
+
+s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+result = s.connect_ex((host,port))
+if result == 0:
+    print("el servidor esta conectado")
+    conn.close()
+    s.close()
+    s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+
+else:
+    print("el servidor no esta conectado")
+    
+s.bind((host,port))
+s.listen(5)
+conn, addr = s.accept()
+
 
 
 
@@ -51,8 +68,8 @@ canvas.grid()
 a=0
 #-*- coding: utf-8 -*-
 #info_input1=0
-thread_servidor = threading.Thread(target=servidor.conexion)
-thread_servidor.start()
+#thread_servidor = threading.Thread(target=conexion)
+#thread_servidor.start()
 
 def MAIN(a):
     
@@ -74,58 +91,81 @@ def MAIN(a):
            
         input1.delete(0,'end')
         input1.focus_set()
-        sequence()
+        #sequence()
 
 
-    #funcion para cambiar el enfoque
+    #funcion para cambiar el enfoque 
     def open_cam():
         cap = cv2.VideoCapture(0) # Abre la camara con el indice 0 (camara predeterminada)
         return cap
     
      
-    def capture_image(cap,delay,canvas,root,point):
+    def capture_image(cap, datos, delay,canvas,root,point):
    
         ret, frame = cap.read()
         if ret:
             img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             img_pil = Image.fromarray(img)
-            
             #mostrar la imagen en el canvas
             
             photo = ImageTk.PhotoImage(img_pil.resize((632,300)))
             
             image_canvas = canvas.create_image(947,470, anchor=tk.CENTER, image=photo, tags=("img"))
-            print(f"Imagen mostrada")
+            print("Imagen mostrada")
             root.update()
             time.sleep(delay)
             canvas.delete("img")
             root.update()
+            
+            
             #guardar la imagen
-            if not os.path.exists(info_input1):
-                os.makedirs(info_input1)
+            if not os.path.exists(datos):
+                os.makedirs(datos)
                 
-            img_name=f"{info_input1}/capture_image_{point}.png"
+            img_name=f"/home/pi/auditoriatesla/AudPython/{datos}/img_{point}.png"
             cv2.imwrite(img_name, frame)
-            print(f"Imagen capturada y guardada")
+            print("Imagen capturada y guardada", img_name)
                
             
         else:
             print("error al capturar la imagen")          
 
-        
-    def sequence():
+    
+     
+    def sequence(datos):
         print("estoy en secuencia")
-        
-        '''for i in range(4):
-            print("Haz llegado hasta aqui")
-            cap = open_cam()
-            capture_image(cap, delay=2,canvas=canvas, root=root, point=i+1)
-            cap.release()'''
+        print("Haz llegado hasta aqui")
+        cap = open_cam()
+        capture_image(cap, datos, delay=2,canvas=canvas, root=root, point=1)
+        cap.release()
+        respuesta = "2"
+        conn.send(respuesta.encode())
+        conexion()
             
                 
+                    
+            
+    def conexion():
         
+        print("conexion desde: ", addr)
 
+        while True:
+            datos_recibidos = conn.recv(1024)
+            datos = datos_recibidos.decode().strip()
+            if not datos_recibidos:
+                break
+            print("Datos recibidos: ", datos_recibidos.decode())
+            if datos == "1":
+                sequence(datos)
            
+            else:
+                respuesta = "comando no reconocido"
+                conn.send(respuesta.encode())
+                
+                
+           
+       
+    
     # Cargar las imagenes
     image1 = Image.open("img/fondocompleto.png")
     image2 = Image.open("img/tesla2.png")
@@ -168,7 +208,13 @@ def MAIN(a):
     input1.bind("<Return>", procesar_datos)
     # Iniciar el bucle princ
     print(a)
+    root.update()
+    respuesta = "Wait"
+    conn.send(respuesta.encode())
+    conexion()
+    
     root.mainloop()
     
     
+      
 MAIN(a)
