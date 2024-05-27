@@ -7,7 +7,7 @@ import time
 import os
 import socket
 import threading
-
+import tensorflow.lite as tflite
 root = tk.Tk()
 root.title("Auditoria Tesla")
 
@@ -26,7 +26,7 @@ if result == 0:
     s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 
 else:
-    print("el servidor no esta conectado")
+    print("esperando ...")
     
 s.bind((host,port))
 s.listen(5)
@@ -137,13 +137,50 @@ def MAIN(a):
         print("Haz llegado hasta aqui")
         cap = open_cam()
         capture_image(cap, datos, delay=2,canvas=canvas, root=root, point=1)
+        modelo()
         cap.release()
         respuesta = "2"
         conn.send(respuesta.encode())
         conexion()
             
                 
-                    
+    def modelo():
+        interpreter = tf.lite.Interpreter(model_path="modelo.tflite")
+        interpreter.allocate_tensors()
+        
+        #obtener detalles del modelo
+        
+        input_details = interpreter.get_input_details()
+        output_details = interpreter.get_output_details()
+        
+        #definir las clases
+        
+        class_names = ['buenas','buenas2','malas',...]
+        
+        #cargar y preparar la imagen
+        
+        image_path = '/content/75956306935442820000.jpeg'
+        img_height = 170
+        img_width = 170
+        
+        img = tf.keras.utils.load_img(image_path,target_size=(img_height, img_width))
+        img_array = tf.keras.utils.img_to_array(img)
+        imag_array = tf.expand_dims(img_array,0) #crear un lote de una sola imagen
+        
+        #ejecutar el modelo y obtener predicciones
+        
+        interpreter.set_tensor(input_details[0]['index'], img_array)
+        interpreter.invoke()
+        output_data = interpreter.get_tensor(output_details[0]['index'])
+        
+        #procesar las predicciones
+        
+        score = tf.nn.softmax(output_data[0])
+        
+        print("This image most likely belongs to {} with a {:.2f} percent confidence".format(class_names[np.argmax(score)],100*np.max(score)))
+                                             
+        
+        
             
     def conexion():
         
